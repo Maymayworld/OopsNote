@@ -46,7 +46,7 @@ class Home extends HookConsumerWidget {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.note),
-            label: 'ミス記録'
+            label: 'ミス集'
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.analytics),
