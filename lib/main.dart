@@ -2,11 +2,12 @@
 import 'package:flutter/material.dart';
 import 'home.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 void main() {
   runApp(
-    ProviderScope(
-      child: const MyApp()
+    const ProviderScope(
+      child: MyApp()
     )
   );
 }
@@ -17,9 +18,13 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Misslog',
+      title: 'OopsNote',
+      theme: ThemeData(
+        textTheme: GoogleFonts.zenKakuGothicNewTextTheme(),
+      ),
       themeMode: ThemeMode.system,
-      home: const Home(selectedNumber: 0),
+      debugShowCheckedModeBanner: false,
+      home: Home(selectedNumber: 0),
     );
   }
 }
