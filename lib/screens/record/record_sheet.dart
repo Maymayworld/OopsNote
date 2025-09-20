@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:misslog/screens/record/widgets/category_chip_widget.dart';
+import 'package:misslog/screens/record/widgets/category_detail_dialog.dart';
 import 'package:misslog/themes/app_theme.dart';
 
 class RecordSheet extends HookConsumerWidget{
@@ -20,6 +22,7 @@ class RecordSheet extends HookConsumerWidget{
     useListenable(improvementController);
 
     final conditionValue = useState<int>(0);
+    final categoryValue = useState<List<String>>([]);
 
     return DraggableScrollableSheet(
       expand: false,
@@ -54,7 +57,7 @@ class RecordSheet extends HookConsumerWidget{
                   ],
                 ),
                 
-                SizedBox(height: 32,),
+                SizedBox(height: 24),
 
                 Expanded(
                   child: SingleChildScrollView(
@@ -62,24 +65,6 @@ class RecordSheet extends HookConsumerWidget{
                     child: Column(
                       children: [
                         // 日付表示
-
-
-                        // ミスタグ選択欄
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            'ミスタグ',
-                            style: TextStyle(
-                              color: textPrimaryGrey,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                  
-                        SizedBox(height: 8,),
-                  
-                        SizedBox(height: 24,),
                         
                         // ミス名入力欄
                         Align(
@@ -124,24 +109,189 @@ class RecordSheet extends HookConsumerWidget{
                           ),
                         ),
                   
-                        SizedBox(height: 24),
+                        SizedBox(height: 12),
                   
                         // 画像添付欄
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            '画像添付',
-                            style: TextStyle(
-                              color: textPrimaryGrey,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                        SizedBox(
+                          width: double.infinity,
+                          height: 36,
+                          child: ElevatedButton(
+                            onPressed: () {
+                            
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primaryBlue,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4)
+                              )
+                            ),
+                            child: Text(
+                              '問題の画像を追加',
+                              style: TextStyle(
+                              color: cardGrey,
+                                fontSize: 14,
+                              ),
                             ),
                           ),
                         ),
                   
-                        SizedBox(height: 8,),
+                        SizedBox(height: 12,),
+                        Divider(color: Colors.grey[300],),
+                        SizedBox(height: 12,),
+
+                        // ミスハッシュタグ
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                'ミスの種類は？',
+                                style: TextStyle(
+                                  color: textPrimaryGrey,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Spacer(),
+                              GestureDetector(
+                                onTap: () {
+                                  // 詳細説明ダイアログ
+                                  showDialog(
+                                    // ダイアログ外をタップで閉じるように
+                                    barrierDismissible: true,
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return CategoryDetailDialog();
+                                    }
+                                  );
+                                },
+                                child: Center(
+                                  child: Icon(
+                                    Icons.info_outline_rounded,
+                                    color: Colors.grey[400],
+                                    size: 18,
+                                  ),
+                                ),
+                              )
+                            ],
+                          ),
+                        ),
                   
-                        SizedBox(height: 24,),
+                        SizedBox(height: 8,),
+
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                CategoryChip(
+                                  categoryName: '計算',
+                                  isSelected: categoryValue.value.contains('計算'),
+                                  onTap: () {
+                                    if (categoryValue.value.contains('計算')) {
+                                    // すでに入っていたら削除
+                                      categoryValue.value = List.from(categoryValue.value)..remove('計算');
+                                    } else {
+                                    // 入ってなかったら追加
+                                      categoryValue.value = List.from(categoryValue.value)..add('計算');
+                                    }
+                                  },
+                                ),
+                                SizedBox(width: 8,),
+                                CategoryChip(
+                                  categoryName: '読解',
+                                  isSelected: categoryValue.value.contains('読解'),
+                                  onTap: () {
+                                    if (categoryValue.value.contains('読解')) {
+                                    // すでに入っていたら削除
+                                      categoryValue.value = List.from(categoryValue.value)..remove('読解');
+                                    } else {
+                                    // 入ってなかったら追加
+                                      categoryValue.value = List.from(categoryValue.value)..add('読解');
+                                    }
+                                  },
+                                ),
+                                SizedBox(width: 8,),
+                                CategoryChip(
+                                  categoryName: '論理',
+                                  isSelected: categoryValue.value.contains('論理'),
+                                  onTap: () {
+                                    if (categoryValue.value.contains('論理')) {
+                                    // すでに入っていたら削除
+                                      categoryValue.value = List.from(categoryValue.value)..remove('論理');
+                                    } else {
+                                    // 入ってなかったら追加
+                                      categoryValue.value = List.from(categoryValue.value)..add('論理');
+                                    }
+                                  },
+                                ),
+                                SizedBox(width: 8,),
+                                CategoryChip(
+                                  categoryName: '公式',
+                                  isSelected: categoryValue.value.contains('公式'),
+                                  onTap: () {
+                                    if (categoryValue.value.contains('公式')) {
+                                    // すでに入っていたら削除
+                                      categoryValue.value = List.from(categoryValue.value)..remove('公式');
+                                    } else {
+                                    // 入ってなかったら追加
+                                      categoryValue.value = List.from(categoryValue.value)..add('公式');
+                                    }
+                                  },
+                                ),
+                                SizedBox(width: 8,),
+                                CategoryChip(
+                                  categoryName: '表記',
+                                  isSelected: categoryValue.value.contains('表記'),
+                                  onTap: () {
+                                    if (categoryValue.value.contains('表記')) {
+                                    // すでに入っていたら削除
+                                      categoryValue.value = List.from(categoryValue.value)..remove('表記');
+                                    } else {
+                                    // 入ってなかったら追加
+                                      categoryValue.value = List.from(categoryValue.value)..add('表記');
+                                    }
+                                  },
+                                ),
+                                SizedBox(width: 8,),
+                                CategoryChip(
+                                  categoryName: '戦略',
+                                  isSelected: categoryValue.value.contains('戦略'),
+                                  onTap: () {
+                                    if (categoryValue.value.contains('戦略')) {
+                                    // すでに入っていたら削除
+                                      categoryValue.value = List.from(categoryValue.value)..remove('戦略');
+                                    } else {
+                                    // 入ってなかったら追加
+                                      categoryValue.value = List.from(categoryValue.value)..add('戦略');
+                                    }
+                                  },
+                                ),
+                                SizedBox(width: 8,),
+                                CategoryChip(
+                                  categoryName: 'その他',
+                                  isSelected: categoryValue.value.contains('その他'),
+                                  onTap: () {
+                                    if (categoryValue.value.contains('その他')) {
+                                    // すでに入っていたら削除
+                                      categoryValue.value = List.from(categoryValue.value)..remove('その他');
+                                    } else {
+                                    // 入ってなかったら追加
+                                      categoryValue.value = List.from(categoryValue.value)..add('その他');
+                                    }
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        SizedBox(height: 12,),
+                        Divider(color: Colors.grey[300],),
+                        SizedBox(height: 12,),
                   
                         // 状況入力欄
                         Align(
@@ -186,7 +336,9 @@ class RecordSheet extends HookConsumerWidget{
                           ),
                         ),
                   
-                        SizedBox(height: 24),
+                        SizedBox(height: 12,),
+                        Divider(color: Colors.grey[300],),
+                        SizedBox(height: 12,),
                    
                         // コンディションメーター
                         Align(
@@ -435,7 +587,9 @@ class RecordSheet extends HookConsumerWidget{
                           ],
                         ),
                   
-                        SizedBox(height: 24,),
+                        SizedBox(height: 12,),
+                        Divider(color: Colors.grey[300],),
+                        SizedBox(height: 12,),
                   
                   
                         // 改善案入力欄
@@ -480,47 +634,46 @@ class RecordSheet extends HookConsumerWidget{
                             ),
                           ),
                         ),
-                  
-                        SizedBox(height: 32),
-                  
-                      
                       ],
                     ),
                   ),
                 ),
+
+                SizedBox(height: 24,),
                 
                 // 保存ボタン
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: AnimatedContainer(
-                      duration: Duration(milliseconds: 200),
-                      curve: Curves.easeInOut,
-                      child: ElevatedButton(
-                        onPressed: nameController.value.text.isEmpty
-                        ? null
-                        : () {
-                          Navigator.of(context).pop();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryBlue,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(999)
-                          )
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: AnimatedContainer(
+                    duration: Duration(milliseconds: 200),
+                    curve: Curves.easeInOut,
+                    child: ElevatedButton(
+                      onPressed: nameController.value.text.isEmpty
+                      ? null
+                      : () {
+                        Navigator.of(context).pop();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryBlue,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(999)
+                        )
+                      ),
+                      child: Text(
+                        '保存',
+                        style: TextStyle(
+                          color: Color(0xFFfafafa),
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold
                         ),
-                        child: Text(
-                          '保存',
-                          style: TextStyle(
-                            color: Color(0xFFfafafa),
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold
-                          ),),
                       ),
                     ),
-                  )
+                  ),
+                )
               ],
             ),
-            )
+          )
         );
       }
     );
