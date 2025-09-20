@@ -1,9 +1,12 @@
 // lib/screens/record/record_sheet.dart
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:misslog/screens/record/widgets/category_chip_widget.dart';
 import 'package:misslog/screens/record/widgets/category_detail_dialog.dart';
+import 'package:misslog/screens/record/widgets/image_picker_dialog.dart';
 import 'package:misslog/themes/app_theme.dart';
 
 class RecordSheet extends HookConsumerWidget{
@@ -23,6 +26,36 @@ class RecordSheet extends HookConsumerWidget{
 
     final conditionValue = useState<int>(0);
     final categoryValue = useState<List<String>>([]);
+    
+    // 画像アップロード関連の状態管理
+    final selectedImage = useState<File?>(null);
+    final imagePicker = ImagePicker();
+
+    // 画像選択のダイアログを表示する関数
+    Future<void> showImageSourceDialog() async {
+      showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder: (context) => ImagePickerDialog(
+          onImageSourceSelected: (ImageSource source) async {
+            final pickedFile = await imagePicker.pickImage(
+              source: source,
+              maxWidth: 1920,
+              maxHeight: 1080,
+              imageQuality: 85,
+            );
+            if (pickedFile != null) {
+              selectedImage.value = File(pickedFile.path);
+            }
+          },
+        ),
+      );
+    }
+
+    // 画像を削除する関数
+    void removeImage() {
+      selectedImage.value = null;
+    }
 
     return DraggableScrollableSheet(
       expand: false,
@@ -112,28 +145,79 @@ class RecordSheet extends HookConsumerWidget{
                         SizedBox(height: 12),
                   
                         // 画像添付欄
-                        SizedBox(
-                          width: double.infinity,
-                          height: 36,
-                          child: ElevatedButton(
-                            onPressed: () {
-                            
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: primaryBlue,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(4)
-                              )
-                            ),
-                            child: Text(
-                              '問題の画像を追加',
-                              style: TextStyle(
-                              color: cardGrey,
-                                fontSize: 14,
+                        selectedImage.value == null
+                          ? // 画像が選択されていない場合：アップロードボタンを表示
+                          SizedBox(
+                            width: double.infinity,
+                            height: 36,
+                            child: ElevatedButton(
+                              onPressed: showImageSourceDialog,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primaryBlue,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(4)
+                                )
+                              ),
+                              child: Text(
+                                '問題の画像を追加',
+                                style: TextStyle(
+                                color: cardGrey,
+                                  fontSize: 14,
+                                ),
                               ),
                             ),
+                          )
+                          : // 画像が選択されている場合：画像を表示
+                          Stack(
+                            children: [
+                              GestureDetector(
+                                onTap: showImageSourceDialog,
+                                child: Container(
+                                  width: double.infinity,
+                                  constraints: BoxConstraints(
+                                    minHeight: 120,
+                                    maxHeight: 300,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: Colors.grey[300]!,
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.file(
+                                      selectedImage.value!,
+                                      fit: BoxFit.contain,
+                                      width: double.infinity,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              // 削除ボタン（×）
+                              Positioned(
+                                top: 8,
+                                right: 8,
+                                child: GestureDetector(
+                                  onTap: removeImage,
+                                  child: Container(
+                                    width: 28,
+                                    height: 28,
+                                    decoration: const BoxDecoration(
+                                      color: Colors.black54,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.close,
+                                      color: Colors.white,
+                                      size: 18,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
                   
                         SizedBox(height: 12,),
                         Divider(color: Colors.grey[300],),
