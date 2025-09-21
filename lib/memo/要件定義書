@@ -72,7 +72,7 @@
 
 ・ミス一覧画面 # screens/mistake/mistake_list_screen.dart
 - 画面上部にタイトル「ミス一覧」
-- フィルター選択欄(ミスタグごと、追加、削除可)
+- フィルター選択欄(ミス種類ごと)
 - 画面中央から下部にかけてミスの多さ順で並べられたミスタイル(リスト形式)
 
 ・ミスタイル # screens/mistake/widgets/mistake_tile_widget.dart
@@ -82,13 +82,7 @@
 
 ・ミス詳細シート # screens/mistake/widgets/mistake_detail_sheet.dart
 - 画面最大幅のモーダル
-- ミス名表示
-- ミスタグ表示(複数可)
-- ミス回数表示
-- 問題の画像表示(任意)
-- コンディションメーター(1～10)
-- コンディションメモ表示(任意)
-- 改善案表示(任意)
+- 中身はミス記録シートと同じ(編集可)
 - 画面下部に「閉じる」ボタン
 
 ・分析画面 # screens/analysis/analysis_screen.dart

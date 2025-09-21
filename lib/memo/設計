@@ -1,0 +1,22 @@
+# 保存処理設計
+List形式で、Mapを保存。
+- ミス名(String)
+- 画像(?) ※null許容
+- 種類(List<String>)
+- 原因文(String) ※null許容
+- 調子(int) ※null許容
+- 改善方法(String) ※null許容
+- 日時(Datetime) ※null許容
+
+保存方法: shared_preferences
+
+型
+- List<Map<String, dynamic>> missData
+- Map<String, dynamic>
+  - 'name': String
+  - 'imagePath': String? (画像のパス、null許容)
+  - 'tags': List<String>
+  - 'condition': int? (1～10、null許容)
+  - 'reason': String? (null許容)
+  - 'improvement': String? (null許容)
+  - 'date': String (ISO8601形式の文字列)

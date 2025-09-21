@@ -7,6 +7,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:misslog/screens/record/widgets/category_chip_widget.dart';
 import 'package:misslog/screens/record/widgets/category_detail_dialog.dart';
 import 'package:misslog/screens/record/widgets/image_picker_dialog.dart';
+import 'package:misslog/screens/record/record_dialog.dart';
+import 'package:misslog/services/miss_data_service.dart';
 import 'package:misslog/themes/app_theme.dart';
 
 class RecordSheet extends HookConsumerWidget{
@@ -57,6 +59,42 @@ class RecordSheet extends HookConsumerWidget{
       selectedImage.value = null;
     }
 
+    // 保存処理
+    Future<void> saveMissData() async {
+      try {
+        await MissDataService.saveMissData(
+          name: nameController.text,
+          imagePath: selectedImage.value?.path,
+          tags: categoryValue.value,
+          condition: conditionValue.value,
+          reason: situationController.text.isEmpty ? null : situationController.text,
+          improvement: improvementController.text.isEmpty ? null : improvementController.text,
+        );
+        
+        // 保存成功後にダイアログを閉じて成功ダイアログを表示
+        if (context.mounted) {
+          Navigator.of(context).pop();
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return RecordDialog();
+            }
+          );
+        }
+      } catch (e) {
+        // エラー処理
+        print('保存エラー: $e');
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('保存に失敗しました: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+
     return DraggableScrollableSheet(
       expand: false,
       initialChildSize: 1,
@@ -66,7 +104,7 @@ class RecordSheet extends HookConsumerWidget{
         Container(
           width: MediaQuery.of(context).size.width,
           child: Padding(
-            padding: EdgeInsetsGeometry.all(24),
+            padding: EdgeInsets.all(24),
             child: Column(
               children: [
 
@@ -381,7 +419,7 @@ class RecordSheet extends HookConsumerWidget{
                         Align(
                           alignment: Alignment.centerLeft,
                           child: Text(
-                            'どんな状況だった？',
+                            'なぜミスをしてしまった？',
                             style: TextStyle(
                               color: textPrimaryGrey,
                               fontSize: 16,
@@ -428,7 +466,7 @@ class RecordSheet extends HookConsumerWidget{
                         Align(
                           alignment: Alignment.centerLeft,
                           child: Text(
-                            'あなたの調子は？',
+                            '調子はどうだった？',
                             style: TextStyle(
                               color: textPrimaryGrey,
                               fontSize: 16,
@@ -733,11 +771,9 @@ class RecordSheet extends HookConsumerWidget{
                     duration: Duration(milliseconds: 200),
                     curve: Curves.easeInOut,
                     child: ElevatedButton(
-                      onPressed: nameController.value.text.isEmpty
+                      onPressed: (nameController.value.text.isEmpty || categoryValue.value.isEmpty)
                       ? null
-                      : () {
-                        Navigator.of(context).pop();
-                      },
+                      : saveMissData,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primaryBlue,
                         shape: RoundedRectangleBorder(

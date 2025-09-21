@@ -22,7 +22,7 @@ class Home extends HookConsumerWidget {
 
     final pages = [
       const HomeScreen(),
-      const MistakeScreen(),
+      const MistakeListScreen(),
       const AnalysisScreen(),
       const ShopScreen(),
     ];

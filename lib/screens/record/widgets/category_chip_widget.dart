@@ -1,4 +1,4 @@
-// 
+// lib/screens/record/widgets/category_chip_widget.dart
 import 'package:flutter/material.dart';
 import 'package:misslog/themes/app_theme.dart';
 
