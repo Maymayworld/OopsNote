@@ -12,13 +12,11 @@ import 'package:misslog/themes/app_theme.dart';
 
 class MistakeDetailSheet extends HookConsumerWidget {
   final Map<String, dynamic> mistakeData;
-  final int mistakeIndex;
   final VoidCallback? onDataUpdated;
 
   const MistakeDetailSheet({
     super.key,
     required this.mistakeData,
-    required this.mistakeIndex,
     this.onDataUpdated,
   });
 
@@ -33,6 +31,7 @@ class MistakeDetailSheet extends HookConsumerWidget {
     int condition = mistakeData['condition'] ?? 0;
     String? reason = mistakeData['reason'];
     String? improvement = mistakeData['improvement'];
+    String mistakeId = mistakeData['id'] ?? mistakeData['date'] ?? '';
 
     // 削除処理
     Future<void> deleteMissData() async {
@@ -60,7 +59,8 @@ class MistakeDetailSheet extends HookConsumerWidget {
               TextButton(
                 onPressed: () async {
                   try {
-                    await MissDataService.deleteMissData(mistakeIndex);
+                    // IDによる削除に変更
+                    await MissDataService.deleteMissDataById(mistakeId);
                     if (context.mounted) {
                       Navigator.of(context).pop(); // ダイアログを閉じる
                       Navigator.of(context).pop(); // 詳細シートを閉じる
@@ -70,7 +70,10 @@ class MistakeDetailSheet extends HookConsumerWidget {
                           backgroundColor: Colors.red,
                         ),
                       );
-                      onDataUpdated?.call();
+                      // データ更新コールバックを呼び出し
+                      if (onDataUpdated != null) {
+                        onDataUpdated!();
+                      }
                     }
                   } catch (e) {
                     if (context.mounted) {

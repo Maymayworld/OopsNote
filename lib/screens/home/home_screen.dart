@@ -16,7 +16,6 @@ class HomeScreen extends HookConsumerWidget {
     final todayMissCount = useState<int>(0);
     final totalMissCount = useState<int>(0);
     final recentMistakes = useState<List<Map<String, dynamic>>>([]);
-    final allMistakes = useState<List<Map<String, dynamic>>>([]);
     final isLoading = useState<bool>(true);
 
     // データを読み込む関数
@@ -50,7 +49,6 @@ class HomeScreen extends HookConsumerWidget {
         todayMissCount.value = todayCount;
         totalMissCount.value = totalCount;
         recentMistakes.value = recent;
-        allMistakes.value = allData;
         isLoading.value = false;
       } catch (e) {
         print('データの読み込みに失敗しました: $e');
@@ -66,29 +64,23 @@ class HomeScreen extends HookConsumerWidget {
 
     // 詳細画面を表示
     void showDetailSheet(Map<String, dynamic> data) {
-      // 元のインデックスを取得
-      final originalIndex = allMistakes.value.indexOf(data);
-      
-      if (originalIndex != -1) {
-        showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.zero,
-          ),
-          backgroundColor: backgroundGray,
-          builder: (context) {
-            return MistakeDetailSheet(
-              mistakeData: data,
-              mistakeIndex: originalIndex,
-              onDataUpdated: () {
-                // データ更新後にホーム画面のデータも再読み込み
-                loadMissData();
-              },
-            );
-          },
-        );
-      }
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.zero,
+        ),
+        backgroundColor: backgroundGray,
+        builder: (context) {
+          return MistakeDetailSheet(
+            mistakeData: data,
+            onDataUpdated: () {
+              // データ更新後にホーム画面のデータも再読み込み
+              loadMissData();
+            },
+          );
+        },
+      );
     }
 
     return Scaffold(

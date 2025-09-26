@@ -1,4 +1,4 @@
-// lib/screens/analysis/analysis_screen.dart
+// lib/screens/analysis/analysis_screen.dart (修正版)
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -64,6 +64,34 @@ class AnalysisScreen extends HookConsumerWidget {
           dailyMistakes[dayOnly] = (dailyMistakes[dayOnly] ?? 0) + 1;
         }
 
+        // 改善案の分析（日付情報付き）
+        Map<String, List<Map<String, dynamic>>> improvementsByCategory = {};
+        for (var data in periodData) {
+          String? improvement = data['improvement'];
+          if (improvement != null && improvement.isNotEmpty) {
+            List<dynamic> tags = data['tags'] ?? [];
+            DateTime mistakeDate = DateTime.parse(data['date']);
+            
+            for (var tag in tags) {
+              String category = tag.toString();
+              if (!improvementsByCategory.containsKey(category)) {
+                improvementsByCategory[category] = [];
+              }
+              improvementsByCategory[category]!.add({
+                'improvement': improvement,
+                'date': mistakeDate,
+              });
+            }
+          }
+        }
+
+        // 各カテゴリーの改善案を日付順（新しい順）でソート
+        for (String category in improvementsByCategory.keys) {
+          improvementsByCategory[category]!.sort((a, b) => 
+            (b['date'] as DateTime).compareTo(a['date'] as DateTime)
+          );
+        }
+
         // 総合フィードバック生成
         String feedback = _generateFeedback(periodData, categoryCount, conditionCount, days);
 
@@ -72,6 +100,7 @@ class AnalysisScreen extends HookConsumerWidget {
           'categoryCount': categoryCount,
           'conditionCount': conditionCount,
           'dailyMistakes': dailyMistakes,
+          'improvementsByCategory': improvementsByCategory,
           'feedback': feedback,
         };
       } catch (e) {
@@ -221,6 +250,13 @@ class AnalysisScreen extends HookConsumerWidget {
 
                 SizedBox(height: 24),
 
+                // 意識すべきこと（改善案）
+                _buildImprovementSuggestions(
+                  analysisData.value['improvementsByCategory'] ?? {}
+                ),
+
+                SizedBox(height: 24),
+
                 // ミスの種類分析レーダーチャート
                 _buildCategoryRadarChart(analysisData.value['categoryCount'] ?? {}),
 
@@ -242,6 +278,305 @@ class AnalysisScreen extends HookConsumerWidget {
             ),
           ),
     );
+  }
+
+  // 意識すべきこと（改善案）- タブ形式
+  Widget _buildImprovementSuggestions(Map<String, dynamic> improvementsByCategory) {
+    if (improvementsByCategory.isEmpty) {
+      return Container(
+        height: 250,
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: cardGrey,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              '意識すべきこと',
+              style: TextStyle(
+                color: textPrimaryGrey,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 16),
+            Icon(
+              Icons.lightbulb_outline,
+              size: 48,
+              color: textSecondaryGray,
+            ),
+            SizedBox(height: 8),
+            Text(
+              '改善案が記録されていません',
+              style: TextStyle(
+                color: textSecondaryGray,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // 固定の順番でカテゴリーを配列
+    final orderedCategories = ['計算', '読解', '論理', '公式', '表記', '戦略', 'その他'];
+    
+    // 実際にデータが存在するカテゴリーのみを抽出
+    final availableCategories = orderedCategories
+        .where((category) => improvementsByCategory.containsKey(category))
+        .toList();
+
+    // TabControllerを使用
+    final tabController = useTabController(initialLength: availableCategories.length);
+
+    return Container(
+      height: 250, // 固定高さ
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardGrey,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // タイトル
+          Text(
+            '意識すべきこと',
+            style: TextStyle(
+              color: textPrimaryGrey,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 8),
+          // 説明文
+          Text(
+            'カテゴリー別の改善案です。問題を解く際は意識するようにしましょう。',
+            style: TextStyle(
+              color: textSecondaryGray,
+              fontSize: 12,
+            ),
+          ),
+          SizedBox(height: 12),
+          // タブビュー
+          Expanded(
+            child: Column(
+              children: [
+                // カテゴリーのタブバー
+                Container(
+                  height: 40,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: availableCategories.asMap().entries.map((entry) {
+                          int index = entry.key;
+                          String category = entry.value;
+                          
+                          return Row(
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  tabController.animateTo(index);
+                                },
+                                child: AnimatedBuilder(
+                                  animation: tabController,
+                                  builder: (context, child) {
+                                    bool isSelected = tabController.index == index;
+                                    return Container(
+                                      width: 64,
+                                      height: 32,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(4),
+                                        border: Border.all(
+                                          color: isSelected ? primaryBlue : Colors.grey[300]!,
+                                          width: 1,
+                                        ),
+                                        color: isSelected ? primaryBlue.withOpacity(0.1) : Colors.transparent,
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          category,
+                                          style: TextStyle(
+                                            color: isSelected ? primaryBlue : textSecondaryGray,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              if (index < availableCategories.length - 1) SizedBox(width: 8),
+                            ],
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 12),
+
+                // 改善案内容
+                Expanded(
+                  child: TabBarView(
+                    controller: tabController,
+                    children: availableCategories.map((category) {
+                      dynamic improvements = improvementsByCategory[category] ?? [];
+                      return _buildTabContent(category, improvements);
+                    }).toList(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // タブの中身を構築（新旧データ形式対応版）
+  Widget _buildTabContent(String category, dynamic improvements) {
+    // データ形式の判定と正規化
+    List<Map<String, dynamic>> normalizedImprovements = [];
+    
+    if (improvements is List) {
+      for (var item in improvements) {
+        if (item is String) {
+          // 古い形式（String）の場合、現在の時刻を設定
+          normalizedImprovements.add({
+            'improvement': item,
+            'date': DateTime.now(),
+          });
+        } else if (item is Map<String, dynamic>) {
+          // 新しい形式（Map）の場合、そのまま使用
+          normalizedImprovements.add(item);
+        }
+      }
+    }
+
+    if (normalizedImprovements.isEmpty) {
+      return Container(
+        width: double.infinity,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.note_alt_outlined,
+              size: 32,
+              color: textSecondaryGray,
+            ),
+            SizedBox(height: 8),
+            Text(
+              'このカテゴリーの改善案はまだありません',
+              style: TextStyle(
+                color: textSecondaryGray,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // 重複を除去（改善案の内容で重複を判定）
+    Map<String, Map<String, dynamic>> uniqueImprovements = {};
+    for (var improvement in normalizedImprovements) {
+      String content = improvement['improvement'] as String;
+      if (!uniqueImprovements.containsKey(content) || 
+          (uniqueImprovements[content]!['date'] as DateTime).isBefore(improvement['date'] as DateTime)) {
+        uniqueImprovements[content] = improvement;
+      }
+    }
+
+    // 日付順（新しい順）でソート済みのリストを作成
+    List<Map<String, dynamic>> sortedImprovements = uniqueImprovements.values.toList()
+      ..sort((a, b) => (b['date'] as DateTime).compareTo(a['date'] as DateTime));
+
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: sortedImprovements.map((improvementData) {
+          String improvement = improvementData['improvement'] as String;
+          DateTime date = improvementData['date'] as DateTime;
+          
+          // 改行で分割して個別の項目として表示
+          List<String> lines = improvement.split('\n')
+            .where((line) => line.trim().isNotEmpty)
+            .toList();
+          
+          return Padding(
+            padding: EdgeInsets.only(bottom: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 日付表示（小さく表示）- 現在時刻の場合は非表示
+                if (!_isToday(date))
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 4),
+                    child: Text(
+                      '${date.month}/${date.day}',
+                      style: TextStyle(
+                        color: textSecondaryGray,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                // 改善案の内容
+                Column(
+                  children: lines.map((line) {
+                    String cleanLine = line.trim();
+                    // 先頭の記号（・、-、*など）を除去
+                    cleanLine = cleanLine.replaceFirst(RegExp(r'^[・\-\*\•]\s*'), '');
+                    
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.only(top: 6),
+                          child: Container(
+                            width: 4,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: primaryBlue,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            cleanLine,
+                            style: TextStyle(
+                              color: textPrimaryGrey,
+                              fontSize: 14,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  // 今日の日付かどうかをチェック
+  bool _isToday(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final checkDate = DateTime(date.year, date.month, date.day);
+    return today == checkDate;
   }
 
   // 総合フィードバック生成

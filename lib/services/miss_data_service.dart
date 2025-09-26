@@ -22,14 +22,16 @@ class MissDataService {
       List<Map<String, dynamic>> existingData = await getMissDataList();
       
       // 新しいデータを作成
+      String dateId = DateTime.now().toIso8601String();
       Map<String, dynamic> newMissData = {
+        'id': dateId, // ユニークIDとして日時を使用
         'name': name,
         'imagePath': imagePath,
         'tags': tags,
         'condition': condition,
         'reason': reason,
         'improvement': improvement,
-        'date': DateTime.now().toIso8601String(),
+        'date': dateId,
       };
       
       // 新しいデータを追加
@@ -62,7 +64,24 @@ class MissDataService {
       }
       
       List<dynamic> jsonList = jsonDecode(jsonString);
-      return jsonList.cast<Map<String, dynamic>>();
+      List<Map<String, dynamic>> dataList = jsonList.cast<Map<String, dynamic>>();
+      
+      // 既存データにIDがない場合は追加
+      bool needsUpdate = false;
+      for (var data in dataList) {
+        if (data['id'] == null) {
+          data['id'] = data['date'] ?? DateTime.now().toIso8601String();
+          needsUpdate = true;
+        }
+      }
+      
+      // IDを追加した場合は保存し直す
+      if (needsUpdate) {
+        String updatedJsonString = jsonEncode(dataList);
+        await prefs.setString(_missDataKey, updatedJsonString);
+      }
+      
+      return dataList;
       
     } catch (e) {
       print('ミスデータの取得に失敗しました: $e');
@@ -70,21 +89,54 @@ class MissDataService {
     }
   }
 
-  // 特定のインデックスのミスデータを取得
-  static Future<Map<String, dynamic>?> getMissData(int index) async {
+  // 特定のIDのミスデータを取得
+  static Future<Map<String, dynamic>?> getMissDataById(String id) async {
     try {
       List<Map<String, dynamic>> dataList = await getMissDataList();
-      if (index >= 0 && index < dataList.length) {
-        return dataList[index];
-      }
-      return null;
+      return dataList.firstWhere(
+        (data) => data['id'] == id,
+        orElse: () => {},
+      );
     } catch (e) {
       print('ミスデータの取得に失敗しました: $e');
       return null;
     }
   }
 
-  // 特定のインデックスのミスデータを削除
+  // 特定のIDのミスデータを削除
+  static Future<void> deleteMissDataById(String id) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      List<Map<String, dynamic>> dataList = await getMissDataList();
+      
+      // 削除対象のデータを探す
+      int indexToDelete = dataList.indexWhere((data) => data['id'] == id);
+      
+      if (indexToDelete != -1) {
+        // 画像ファイルも削除
+        String? imagePath = dataList[indexToDelete]['imagePath'];
+        if (imagePath != null) {
+          File imageFile = File(imagePath);
+          if (await imageFile.exists()) {
+            await imageFile.delete();
+          }
+        }
+        
+        dataList.removeAt(indexToDelete);
+        String jsonString = jsonEncode(dataList);
+        await prefs.setString(_missDataKey, jsonString);
+        
+        print('ミスデータを削除しました (ID: $id)');
+      } else {
+        print('削除対象のデータが見つかりませんでした (ID: $id)');
+      }
+    } catch (e) {
+      print('ミスデータの削除に失敗しました: $e');
+      rethrow;
+    }
+  }
+
+  // 特定のインデックスのミスデータを削除（後方互換性のため残す）
   static Future<void> deleteMissData(int index) async {
     try {
       final prefs = await SharedPreferences.getInstance();

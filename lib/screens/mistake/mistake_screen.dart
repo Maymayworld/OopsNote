@@ -30,23 +30,26 @@ class MistakeListScreen extends HookConsumerWidget {
       'その他'
     ];
 
-    // データを読み込む
-    useEffect(() {
-      Future<void> loadData() async {
-        try {
-          final data = await MissDataService.getMissDataList();
-          // 日付順でソート（新しい順）
-          data.sort((a, b) => 
-            DateTime.parse(b['date']).compareTo(DateTime.parse(a['date']))
-          );
-          mistakeData.value = data;
-          filteredData.value = data;
-          isLoading.value = false;
-        } catch (e) {
-          print('データの読み込みに失敗しました: $e');
-          isLoading.value = false;
-        }
+    // データを読み込む関数
+    Future<void> loadData() async {
+      try {
+        isLoading.value = true;
+        final data = await MissDataService.getMissDataList();
+        // 日付順でソート（新しい順）
+        data.sort((a, b) => 
+          DateTime.parse(b['date']).compareTo(DateTime.parse(a['date']))
+        );
+        mistakeData.value = data;
+        filteredData.value = data;
+        isLoading.value = false;
+      } catch (e) {
+        print('データの読み込みに失敗しました: $e');
+        isLoading.value = false;
       }
+    }
+
+    // 初回データ読み込み
+    useEffect(() {
       loadData();
       return null;
     }, []);
@@ -89,7 +92,7 @@ class MistakeListScreen extends HookConsumerWidget {
     }, [selectedCategory.value]);
 
     // 詳細画面を表示
-    void showDetailSheet(Map<String, dynamic> data, int index) {
+    void showDetailSheet(Map<String, dynamic> data) {
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
@@ -100,15 +103,9 @@ class MistakeListScreen extends HookConsumerWidget {
         builder: (context) {
           return MistakeDetailSheet(
             mistakeData: data,
-            mistakeIndex: index,
-            onDataUpdated: () async {
+            onDataUpdated: () {
               // データ更新後にリストを再読み込み
-              final updatedData = await MissDataService.getMissDataList();
-              updatedData.sort((a, b) => 
-                DateTime.parse(b['date']).compareTo(DateTime.parse(a['date']))
-              );
-              mistakeData.value = updatedData;
-              filterData();
+              loadData();
             },
           );
         },
@@ -244,12 +241,10 @@ class MistakeListScreen extends HookConsumerWidget {
                     separatorBuilder: (context, index) => const SizedBox(height: 8),
                     itemBuilder: (context, index) {
                       final mistake = filteredData.value[index];
-                      // 元のインデックスを探す
-                      final originalIndex = mistakeData.value.indexOf(mistake);
                       
                       return MistakeTileWidget(
                         mistakeData: mistake,
-                        onTap: () => showDetailSheet(mistake, originalIndex),
+                        onTap: () => showDetailSheet(mistake),
                       );
                     },
                   ),
